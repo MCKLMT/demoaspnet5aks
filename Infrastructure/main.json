@@ -8,11 +8,11 @@
     },
     "dnsPrefix": {
       "type": "string",
-      "defaultValue": "cl01"
+      "defaultValue": "aks"
     },
     "clusterName": {
       "type": "string",
-      "defaultValue": "[format('{0}aks', uniqueString(resourceGroup().id))]"
+      "defaultValue": "[uniqueString(resourceGroup().id)]"
     },
     "agentCount": {
       "type": "int",
@@ -36,16 +36,10 @@
     "subnetName": "subnet-01",
     "subnetPrefix": "20.0.0.0/23",
     "virtualNetworkName": "vnet-01",
-    "nodeResourceGroup": "[format('{0}-aks-rg', resourceGroup().name)]",
+    "nodeResourceGroup": "[format('{0}-managedaks', resourceGroup().name)]",
     "agentPoolName": "agentpool01"
   },
   "resources": [
-    {
-      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-      "apiVersion": "2018-11-30",
-      "name": "aksUserIdentity",
-      "location": "[parameters('location')]"
-    },
     {
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2020-04-01-preview",
@@ -53,12 +47,12 @@
       "name": "[variables('roleAssignmentName')]",
       "properties": {
         "roleDefinitionId": "[variables('roleDefinitionId')]",
-        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'aksUserIdentity')).principalId]",
+        "principalId": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('clusterName')), '2020-09-01', 'full').identity.principalId]",
         "principalType": "ServicePrincipal"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.ContainerRegistry/registries', format('{0}acr', parameters('clusterName')))]",
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'aksUserIdentity')]"
+        "[resourceId('Microsoft.ContainerService/managedClusters', parameters('clusterName'))]",
+        "[resourceId('Microsoft.ContainerRegistry/registries', format('{0}acr', parameters('clusterName')))]"
       ]
     },
     {
@@ -100,10 +94,7 @@
       "name": "[parameters('clusterName')]",
       "location": "[parameters('location')]",
       "identity": {
-        "type": "UserAssigned",
-        "userAssignedIdentities": {
-          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'aksUserIdentity')]": {}
-        }
+        "type": "SystemAssigned"
       },
       "properties": {
         "kubernetesVersion": "[variables('kubernetesVersion')]",
@@ -121,6 +112,9 @@
             "vnetSubnetID": "[variables('subnetRef')]"
           }
         ],
+        "servicePrincipalProfile": {
+          "clientId": "msi"
+        },
         "nodeResourceGroup": "[variables('nodeResourceGroup')]",
         "networkProfile": {
           "networkPlugin": "azure",
@@ -128,7 +122,6 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'aksUserIdentity')]",
         "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
       ]
     }

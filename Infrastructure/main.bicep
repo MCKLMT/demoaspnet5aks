@@ -1,6 +1,6 @@
 param location string = resourceGroup().location
-param dnsPrefix string = 'cl01'
-param clusterName string = '${uniqueString(resourceGroup().id)}aks'
+param dnsPrefix string = 'aks'
+param clusterName string = '${uniqueString(resourceGroup().id)}'
 param agentCount int {
   default: 1
   minValue: 1
@@ -18,19 +18,15 @@ var addressPrefix = '20.0.0.0/16'
 var subnetName = 'subnet-01'
 var subnetPrefix = '20.0.0.0/23'
 var virtualNetworkName = 'vnet-01'
-var nodeResourceGroup = '${resourceGroup().name}-aks-rg'
+var nodeResourceGroup = '${resourceGroup().name}-managedaks'
 var agentPoolName = 'agentpool01'
 
-resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
-  name: 'aksUserIdentity'
-  location: location
-}
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   name: roleAssignmentName
   scope: containerRegistry
   properties: {
     roleDefinitionId: roleDefinitionId
-    principalId: managedIdentity.properties.principalId
+    principalId: aks.identity.principalId
     principalType: 'ServicePrincipal'
   }
 }
@@ -67,10 +63,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
   name: clusterName
   location: location
   identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${managedIdentity.id}': {}
-    }
+    type: 'SystemAssigned'
   }
   properties: {
     kubernetesVersion: kubernetesVersion
@@ -88,6 +81,9 @@ resource aks 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
         vnetSubnetID: subnetRef
       }
     ]
+    servicePrincipalProfile: {
+      clientId: 'msi'
+    }
     nodeResourceGroup: nodeResourceGroup
     networkProfile: {
       networkPlugin: 'azure'
