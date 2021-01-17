@@ -1,41 +1,99 @@
-param webAppName string {
-  minLength: 2
-  default: 'AzureLinuxApp'
+param location string = resourceGroup().location
+param dnsPrefix string = 'cl01'
+param clusterName string = '${uniqueString(resourceGroup().id)}aks'
+param agentCount int {
+  default: 1
+  minValue: 1
+  maxValue: 50
 }
+param agentVMSize string = 'Standard_D2_v3'
 
-param location string {
-  default: resourceGroup().location
+var identityName = 'scratch'
+var roleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
+var roleAssignmentName = guid(identityName, roleDefinitionId)
+
+var kubernetesVersion = '1.19.6'
+var subnetRef = '${vn.id}/subnets/${subnetName}'
+var addressPrefix = '20.0.0.0/16'
+var subnetName = 'subnet-01'
+var subnetPrefix = '20.0.0.0/23'
+var virtualNetworkName = 'vnet-01'
+var nodeResourceGroup = '${resourceGroup().name}-aks-rg'
+var agentPoolName = 'agentpool01'
+
+resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: 'aksUserIdentity'
+  location: location
 }
-
-var appServicePlanName = 'AppServicePlan-${webAppName}'
-
-resource appServicePlan 'Microsoft.Web/serverfarms@2020-06-01' = {
-  name: appServicePlanName
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: roleAssignmentName
+  scope: containerRegistry
+  properties: {
+    roleDefinitionId: roleDefinitionId
+    principalId: managedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+resource containerRegistry 'Microsoft.ContainerRegistry/registries@2020-11-01-preview' = {
+  name: '${clusterName}acr'
   location: location
   sku: {
-    name: 'S1'
+    name: 'Standard'
   }
-  kind: 'linux'
   properties: {
-    reserved: true
+    adminUserEnabled: true
   }
 }
-
-resource webApp 'Microsoft.Web/sites@2020-06-01' = {
-  name: webAppName
+resource vn 'Microsoft.Network/virtualNetworks@2020-06-01' = {
+  name: virtualNetworkName
   location: location
-  kind: 'app'
   properties: {
-    serverFarmId: appServicePlan.id
-    siteConfig: {
-      linuxFxVersion: 'DOTNETCORE|5.0'
-      alwaysOn: true
-      appSettings: [
-        {
-          name: 'WEBSITE_WEBDEPLOY_USE_SCM'
-          value: 'true'
-        }
+    addressSpace: {
+      addressPrefixes: [
+        addressPrefix
       ]
+    }
+    subnets: [
+      {
+        name: subnetName
+        properties: {
+          addressPrefix: subnetPrefix
+        }
+      }
+    ]
+  }
+}
+resource aks 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
+  name: clusterName
+  location: location
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${managedIdentity.id}': {}
+    }
+  }
+  properties: {
+    kubernetesVersion: kubernetesVersion
+    enableRBAC: true
+    dnsPrefix: dnsPrefix
+    agentPoolProfiles: [
+      {
+        name: agentPoolName
+        count: agentCount
+        mode: 'System'
+        vmSize: agentVMSize
+        type: 'VirtualMachineScaleSets'
+        osType: 'Linux'
+        enableAutoScaling: false
+        vnetSubnetID: subnetRef
+      }
+    ]
+    nodeResourceGroup: nodeResourceGroup
+    networkProfile: {
+      networkPlugin: 'azure'
+      loadBalancerSku: 'standard'
     }
   }
 }
+output resourceGroupOutput string = resourceGroup().name
+output registryNameOutput string = containerRegistry.name

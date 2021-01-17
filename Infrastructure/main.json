@@ -1,0 +1,146 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "dnsPrefix": {
+      "type": "string",
+      "defaultValue": "cl01"
+    },
+    "clusterName": {
+      "type": "string",
+      "defaultValue": "[format('{0}aks', uniqueString(resourceGroup().id))]"
+    },
+    "agentCount": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 50,
+      "defaultValue": 1
+    },
+    "agentVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3"
+    }
+  },
+  "functions": [],
+  "variables": {
+    "identityName": "scratch",
+    "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
+    "roleAssignmentName": "[guid(variables('identityName'), variables('roleDefinitionId'))]",
+    "kubernetesVersion": "1.19.6",
+    "subnetRef": "[format('{0}/subnets/{1}', resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), variables('subnetName'))]",
+    "addressPrefix": "20.0.0.0/16",
+    "subnetName": "subnet-01",
+    "subnetPrefix": "20.0.0.0/23",
+    "virtualNetworkName": "vnet-01",
+    "nodeResourceGroup": "[format('{0}-aks-rg', resourceGroup().name)]",
+    "agentPoolName": "agentpool01"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2018-11-30",
+      "name": "aksUserIdentity",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', format('{0}acr', parameters('clusterName')))]",
+      "name": "[variables('roleAssignmentName')]",
+      "properties": {
+        "roleDefinitionId": "[variables('roleDefinitionId')]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'aksUserIdentity')).principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries', format('{0}acr', parameters('clusterName')))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'aksUserIdentity')]"
+      ]
+    },
+    {
+      "type": "Microsoft.ContainerRegistry/registries",
+      "apiVersion": "2020-11-01-preview",
+      "name": "[format('{0}acr', parameters('clusterName'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "adminUserEnabled": true
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.ContainerService/managedClusters",
+      "apiVersion": "2020-09-01",
+      "name": "[parameters('clusterName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'aksUserIdentity')]": {}
+        }
+      },
+      "properties": {
+        "kubernetesVersion": "[variables('kubernetesVersion')]",
+        "enableRBAC": true,
+        "dnsPrefix": "[parameters('dnsPrefix')]",
+        "agentPoolProfiles": [
+          {
+            "name": "[variables('agentPoolName')]",
+            "count": "[parameters('agentCount')]",
+            "mode": "System",
+            "vmSize": "[parameters('agentVMSize')]",
+            "type": "VirtualMachineScaleSets",
+            "osType": "Linux",
+            "enableAutoScaling": false,
+            "vnetSubnetID": "[variables('subnetRef')]"
+          }
+        ],
+        "nodeResourceGroup": "[variables('nodeResourceGroup')]",
+        "networkProfile": {
+          "networkPlugin": "azure",
+          "loadBalancerSku": "standard"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'aksUserIdentity')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "resourceGroupOutput": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "registryNameOutput": {
+      "type": "string",
+      "value": "[format('{0}acr', parameters('clusterName'))]"
+    }
+  }
+}
