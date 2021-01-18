@@ -11,15 +11,12 @@ param agentVMSize string = 'Standard_D2_v3'
 var identityName = 'scratch'
 var roleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
 var roleAssignmentName = guid(identityName, roleDefinitionId)
-
 var kubernetesVersion = '1.19.6'
-var subnetRef = '${vn.id}/subnets/${subnetName}'
+var virtualNetworkName = 'vnet-01'
 var addressPrefix = '20.0.0.0/16'
 var subnetName = 'subnet-01'
 var subnetPrefix = '20.0.0.0/23'
-var virtualNetworkName = 'vnet-01'
-var nodeResourceGroup = '${resourceGroup().name}-managedaks'
-var agentPoolName = 'agentpool01'
+var nodeResourceGroup = '${resourceGroup().name}-managed'
 
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   name: roleAssignmentName
@@ -71,14 +68,14 @@ resource aks 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
     dnsPrefix: dnsPrefix
     agentPoolProfiles: [
       {
-        name: agentPoolName
+        name: 'agentpool01'
         count: agentCount
         mode: 'System'
         vmSize: agentVMSize
         type: 'VirtualMachineScaleSets'
         osType: 'Linux'
         enableAutoScaling: false
-        vnetSubnetID: subnetRef
+        vnetSubnetID: '${vn.id}/subnets/${subnetName}'
       }
     ]
     servicePrincipalProfile: {
@@ -93,3 +90,4 @@ resource aks 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
 }
 output resourceGroupOutput string = resourceGroup().name
 output registryNameOutput string = containerRegistry.name
+output aksName string = aks.name

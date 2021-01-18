@@ -31,13 +31,11 @@
     "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
     "roleAssignmentName": "[guid(variables('identityName'), variables('roleDefinitionId'))]",
     "kubernetesVersion": "1.19.6",
-    "subnetRef": "[format('{0}/subnets/{1}', resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), variables('subnetName'))]",
+    "virtualNetworkName": "vnet-01",
     "addressPrefix": "20.0.0.0/16",
     "subnetName": "subnet-01",
     "subnetPrefix": "20.0.0.0/23",
-    "virtualNetworkName": "vnet-01",
-    "nodeResourceGroup": "[format('{0}-managedaks', resourceGroup().name)]",
-    "agentPoolName": "agentpool01"
+    "nodeResourceGroup": "[format('{0}-managed', resourceGroup().name)]"
   },
   "resources": [
     {
@@ -102,14 +100,14 @@
         "dnsPrefix": "[parameters('dnsPrefix')]",
         "agentPoolProfiles": [
           {
-            "name": "[variables('agentPoolName')]",
+            "name": "agentpool01",
             "count": "[parameters('agentCount')]",
             "mode": "System",
             "vmSize": "[parameters('agentVMSize')]",
             "type": "VirtualMachineScaleSets",
             "osType": "Linux",
             "enableAutoScaling": false,
-            "vnetSubnetID": "[variables('subnetRef')]"
+            "vnetSubnetID": "[format('{0}/subnets/{1}', resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), variables('subnetName'))]"
           }
         ],
         "servicePrincipalProfile": {
@@ -134,6 +132,10 @@
     "registryNameOutput": {
       "type": "string",
       "value": "[format('{0}acr', parameters('clusterName'))]"
+    },
+    "aksName": {
+      "type": "string",
+      "value": "[parameters('clusterName')]"
     }
   }
 }
