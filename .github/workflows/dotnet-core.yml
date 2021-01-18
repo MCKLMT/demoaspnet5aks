@@ -50,7 +50,7 @@ jobs:
           echo ${GITHUB_SHA::8}
           kustomize edit set image aspnet5webapp:latest=$IMAGE/aspnet5webapp:${GITHUB_SHA::8}
         env:
-          IMAGE: ${{ steps.deploy.outputs.registryNameOutput }}
+          IMAGE: ${{ steps.deploy.outputs.registryNameOutput }}.azurecr.io
 
       - name: Kustomize build
         run: |
