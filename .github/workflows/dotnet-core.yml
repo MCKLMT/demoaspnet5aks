@@ -29,8 +29,8 @@ jobs:
 
       - name: Kustomize build
         run: |
+          cd ./Kubernetes/
           kustomize build
-          cd ..
 
       - name: Run Bicep build
         uses: aliencube/bicep-build-actions@v0.1
