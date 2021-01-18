@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  Build:
+  Build_and_deploy:
     runs-on: ubuntu-20.04
 
     env:
@@ -42,11 +42,6 @@ jobs:
           azcliversion: latest
           inlineScript: |
             az acr build --registry ${{ steps.deploy.outputs.registryNameOutput }} --image aspnet5webapp:${{ env.COMMIT_REF }} ./WebApp/
-
-      - name: Scan image for vulnerabilities
-        uses: Azure/container-scan@v0
-        with:
-          image-name: ${{ steps.deploy.outputs.registryNameOutput }}/aspnet5webapp:${{ env.COMMIT_REF }}}
 
       - name: Set Azure Kubernetes Service context
         uses: azure/aks-set-context@v1
