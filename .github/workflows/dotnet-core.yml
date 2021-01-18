@@ -55,8 +55,6 @@ jobs:
 
       - run: ./Kubernetes/kustomize edit set image aspnet5webapp:latest=${{ steps.deploy.outputs.registryNameOutput }}/aspnet5webapp:${{ env.COMMIT_REF }}}
 
-      - run: ./Kubernetes/kustomize edit set image aspnet5webapp:latest=${{ steps.deploy.outputs.registryNameOutput }}/aspnet5webapp:${{ env.COMMIT_REF }}}
-
       - run: ./Kubernetes/kustomize build
 
       - name: Deploy to Azure Kubernetes Service
