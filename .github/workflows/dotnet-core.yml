@@ -26,15 +26,15 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # - name: Deploy Azure Resource Manager (ARM) Template
-      #  uses: azure/arm-deploy@v1
-      #  id: deploy
-      #  with:
-      #    scope: resourcegroup
-      #    subscriptionId: ${{ secrets.SUBSCRIPTION_ID }}
-      #    resourceGroupName: demoaspnet5aks-rg
-      #    template: ./Infrastructure/main.json
-      #    deploymentMode: Incremental
+      - name: Deploy Azure Resource Manager (ARM) Template
+        uses: azure/arm-deploy@v1
+        id: deploy
+        with:
+          scope: resourcegroup
+          subscriptionId: ${{ secrets.SUBSCRIPTION_ID }}
+          resourceGroupName: demoaspnet5aks-rg
+          template: ./Infrastructure/main.json
+          deploymentMode: Incremental
 
       - name: Build image with Azure Container Registry
         uses: azure/CLI@v1
