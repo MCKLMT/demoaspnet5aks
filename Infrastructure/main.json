@@ -51,12 +51,12 @@
       "name": "[variables('roleAssignmentName')]",
       "properties": {
         "roleDefinitionId": "[variables('roleDefinitionId')]",
-        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}Identity', parameters('clusterName')))).principalId]",
+        "principalId": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('clusterName'))).identityProfile.kubeletidentity.objectId]",
         "principalType": "ServicePrincipal"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.ContainerRegistry/registries', format('{0}acr', parameters('clusterName')))]",
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}Identity', parameters('clusterName')))]"
+        "[resourceId('Microsoft.ContainerService/managedClusters', parameters('clusterName'))]",
+        "[resourceId('Microsoft.ContainerRegistry/registries', format('{0}acr', parameters('clusterName')))]"
       ]
     },
     {

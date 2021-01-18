@@ -28,7 +28,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-prev
   scope: containerRegistry
   properties: {
     roleDefinitionId: roleDefinitionId
-    principalId: userManagedIdentity.properties.principalId
+    principalId: aks.properties.identityProfile.kubeletidentity.objectId
     principalType: 'ServicePrincipal'
   }
 }
