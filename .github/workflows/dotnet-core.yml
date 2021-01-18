@@ -43,14 +43,6 @@ jobs:
           inlineScript: |
             az acr build --registry ${{ steps.deploy.outputs.registryNameOutput }} --image aspnet5webapp:${{ env.COMMIT_REF }} ./WebApp/
 
-      - name: Set Azure Kubernetes Service context
-        uses: azure/aks-set-context@v1
-        with:
-          creds: "${{ secrets.AZURE_CREDENTIALS }}"
-          resource-group: ${{ steps.deploy.outputs.resourceGroupOutput }}
-          cluster-name: ${{ steps.deploy.outputs.aksName }}
-        id: login
-
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v1
 
@@ -58,14 +50,23 @@ jobs:
         run: |
           cd ./Kubernetes/
           echo $IMAGE
-          kustomize edit set image aspnet5webapp:latest=$IMAGE/aspnet5webapp:$COMMIT_REF
+          kustomize edit set image aspnet5webapp:latest=$IMAGE/aspnet5webapp:$COMMIT
         env:
           IMAGE: ${{ steps.deploy.outputs.registryNameOutput }}
+          COMMIT: ${{ env.COMMIT_REF }}
 
       - name: Kustomize build
         run: |
           kustomize build
           cd ..
+
+      - name: Set Azure Kubernetes Service context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: "${{ secrets.AZURE_CREDENTIALS }}"
+          resource-group: ${{ steps.deploy.outputs.resourceGroupOutput }}
+          cluster-name: ${{ steps.deploy.outputs.aksName }}
+        id: login
 
       - name: Deploy to Azure Kubernetes Service
         uses: azure/k8s-deploy@v1.3
