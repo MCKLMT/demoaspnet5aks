@@ -110,9 +110,6 @@
             "vnetSubnetID": "[format('{0}/subnets/{1}', resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), variables('subnetName'))]"
           }
         ],
-        "servicePrincipalProfile": {
-          "clientId": "msi"
-        },
         "nodeResourceGroup": "[variables('nodeResourceGroup')]",
         "networkProfile": {
           "networkPlugin": "azure",

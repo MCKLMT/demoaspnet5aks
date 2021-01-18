@@ -78,9 +78,6 @@ resource aks 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
         vnetSubnetID: '${vn.id}/subnets/${subnetName}'
       }
     ]
-    servicePrincipalProfile: {
-      clientId: 'msi'
-    }
     nodeResourceGroup: nodeResourceGroup
     networkProfile: {
       networkPlugin: 'azure'

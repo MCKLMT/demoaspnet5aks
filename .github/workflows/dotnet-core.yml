@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  Deploy_infrastructure:
+  Build_and_deploy:
     runs-on: ubuntu-20.04
 
     steps:
