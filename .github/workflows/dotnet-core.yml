@@ -46,7 +46,8 @@ jobs:
           azcliversion: latest
           inlineScript: |
             az aks install-cli
-            az aks get-credentials -g ${{ steps.deploy.outputs.resourceGroupOutput }} -n ${{ steps.deploy.outputs.aksName }}
+            az aks get-credentials -g ${{ steps.deploy.outputs.resourceGroupOutput }} -n ${{ steps.deploy.outputs.aksName }} --file ./Kubernetes/.kubeconfig
+            cat ./Kubernetes/.kubeconfig
 
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v1
@@ -62,4 +63,4 @@ jobs:
 
       - name: Kustomize build and deploy to Kubernetes
         run: |
-          kustomize build ./Kubernetes | kubectl apply -f -
+          kustomize build ./Kubernetes | kubectl apply --kubeconfig ./Kubernetes/.kubeconfig -f -
