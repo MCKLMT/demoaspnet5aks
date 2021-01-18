@@ -53,9 +53,14 @@ jobs:
 
       - uses: imranismail/setup-kustomize@v1
 
-      - run: ./Kubernetes/kustomize edit set image aspnet5webapp:latest=${{ steps.deploy.outputs.registryNameOutput }}/aspnet5webapp:${{ env.COMMIT_REF }}}
+      - run: |
+          cd ./Kubernetes/
+          echo ${IMAGE}
+          kustomize edit set image aspnet5webapp:latest=${IMAGE}
+        env:
+          IMAGE: ${{ steps.deploy.outputs.registryNameOutput }}/aspnet5webapp:${{ env.COMMIT_REF }}}
 
-      - run: ./Kubernetes/kustomize build
+      - run: kustomize build
 
       - name: Deploy to Azure Kubernetes Service
         uses: azure/k8s-deploy@v1.3
