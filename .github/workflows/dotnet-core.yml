@@ -26,15 +26,15 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy Azure Resource Manager (ARM) Template
-        uses: azure/arm-deploy@v1
-        id: deploy
-        with:
-          scope: resourcegroup
-          subscriptionId: ${{ secrets.SUBSCRIPTION_ID }}
-          resourceGroupName: demoaspnet5aks-rg
-          template: ./Infrastructure/main.json
-          deploymentMode: Incremental
+      # - name: Deploy Azure Resource Manager (ARM) Template
+      #  uses: azure/arm-deploy@v1
+      #  id: deploy
+      #  with:
+      #    scope: resourcegroup
+      #    subscriptionId: ${{ secrets.SUBSCRIPTION_ID }}
+      #    resourceGroupName: demoaspnet5aks-rg
+      #    template: ./Infrastructure/main.json
+      #    deploymentMode: Incremental
 
       - name: Build image with Azure Container Registry
         uses: azure/CLI@v1
@@ -46,21 +46,26 @@ jobs:
       - name: Set Azure Kubernetes Service context
         uses: azure/aks-set-context@v1
         with:
-          creds: "${{ secrets.AZURE_CREDENTIALS }}" # Azure credentials
+          creds: "${{ secrets.AZURE_CREDENTIALS }}"
           resource-group: ${{ steps.deploy.outputs.resourceGroupOutput }}
           cluster-name: ${{ steps.deploy.outputs.aksName }}
         id: login
 
-      - uses: imranismail/setup-kustomize@v1
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v1
 
-      - run: |
+      - name: Kustomize edit
+        run: |
           cd ./Kubernetes/
-          echo ${IMAGE}
-          kustomize edit set image aspnet5webapp:latest=${IMAGE}
+          echo $IMAGE
+          kustomize edit set image aspnet5webapp:latest=$IMAGE/aspnet5webapp:$COMMIT_REF
         env:
-          IMAGE: ${{ steps.deploy.outputs.registryNameOutput }}/aspnet5webapp:${{ env.COMMIT_REF }}}
+          IMAGE: ${{ steps.deploy.outputs.registryNameOutput }}
 
-      - run: kustomize build
+      - name: Kustomize build
+        run: |
+          kustomize build
+          cd ..
 
       - name: Deploy to Azure Kubernetes Service
         uses: azure/k8s-deploy@v1.3
