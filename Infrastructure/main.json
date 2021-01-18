@@ -39,12 +39,6 @@
   },
   "resources": [
     {
-      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-      "apiVersion": "2018-11-30",
-      "name": "[format('{0}Identity', parameters('clusterName'))]",
-      "location": "[parameters('location')]"
-    },
-    {
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2020-04-01-preview",
       "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', format('{0}acr', parameters('clusterName')))]",
@@ -98,10 +92,7 @@
       "name": "[parameters('clusterName')]",
       "location": "[parameters('location')]",
       "identity": {
-        "type": "UserAssigned",
-        "userAssignedIdentities": {
-          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}Identity', parameters('clusterName')))]": {}
-        }
+        "type": "SystemAssigned"
       },
       "properties": {
         "kubernetesVersion": "[variables('kubernetesVersion')]",
@@ -126,7 +117,6 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}Identity', parameters('clusterName')))]",
         "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
       ]
     }

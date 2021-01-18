@@ -18,11 +18,6 @@ var subnetName = 'subnet-01'
 var subnetPrefix = '20.0.0.0/23'
 var nodeResourceGroup = '${resourceGroup().name}-managed'
 
-resource userManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
-  name: '${clusterName}Identity'
-  location: location
-}
-
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   name: roleAssignmentName
   scope: containerRegistry
@@ -65,10 +60,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
   name: clusterName
   location: location
   identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${userManagedIdentity.id}': {}
-    }
+    type: 'SystemAssigned'
   }
   properties: {
     kubernetesVersion: kubernetesVersion
