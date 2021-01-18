@@ -40,12 +40,13 @@ jobs:
           inlineScript: |
             az acr build --registry ${{ steps.deploy.outputs.registryNameOutput }} --image aspnet5webapp:${GITHUB_SHA::8} ./WebApp/
 
-      - name: Set Azure Kubernetes Service context
-        uses: azure/aks-set-context@v1
+      - name: Install Kubectl and get context
+        uses: azure/CLI@v1
         with:
-          creds: "${{ secrets.AZURE_CREDENTIALS }}"
-          resource-group: ${{ steps.deploy.outputs.resourceGroupOutput }}
-          cluster-name: ${{ steps.deploy.outputs.aksName }}
+          azcliversion: latest
+          inlineScript: |
+            az acr install-cli
+            az acr get-credentials -g ${{ steps.deploy.outputs.resourceGroupOutput }} -n ${{ steps.deploy.outputs.aksName }}
 
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v1
@@ -59,17 +60,6 @@ jobs:
         env:
           IMAGE: ${{ steps.deploy.outputs.registryNameOutput }}
 
-      - name: Kustomize build
+      - name: Kustomize build and deploy to Kubernetes
         run: |
-          kustomize build ./Kubernetes
-
-      - name: Deploy to Azure Kubernetes Service
-        uses: azure/k8s-deploy@v1.3
-        with:
-          namespace: "aspnet5webapp"
-          manifests: |
-            ./Kubernetes/namespace.yaml
-            ./Kubernetes/deployment.yaml
-            ./Kubernetes/service.yaml
-          images: ${{ steps.deploy.outputs.registryNameOutput }}/aspnet5webapp:${GITHUB_SHA::8}
-          kubectl-version: "latest"
+          kustomize build ./Kubernetes | kubectl apply -f -
