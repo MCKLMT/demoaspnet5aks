@@ -45,8 +45,8 @@ jobs:
         with:
           azcliversion: latest
           inlineScript: |
-            az acr install-cli
-            az acr get-credentials -g ${{ steps.deploy.outputs.resourceGroupOutput }} -n ${{ steps.deploy.outputs.aksName }}
+            az aks install-cli
+            az aks get-credentials -g ${{ steps.deploy.outputs.resourceGroupOutput }} -n ${{ steps.deploy.outputs.aksName }}
 
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v1
