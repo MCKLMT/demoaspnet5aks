@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  Build_and_deploy:
+  Deploy_infrastructure:
     runs-on: ubuntu-20.04
 
     steps:
@@ -40,15 +40,6 @@ jobs:
           inlineScript: |
             az acr build --registry ${{ steps.deploy.outputs.registryNameOutput }} --image aspnet5webapp:${GITHUB_SHA::8} ./WebApp/
 
-      - name: Install Kubectl and get context
-        uses: azure/CLI@v1
-        with:
-          azcliversion: latest
-          inlineScript: |
-            az aks install-cli
-            az aks get-credentials -g ${{ steps.deploy.outputs.resourceGroupOutput }} -n ${{ steps.deploy.outputs.aksName }} --file ./Kubernetes/.kubeconfig
-            cat ./Kubernetes/.kubeconfig
-
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v1
 
@@ -61,6 +52,16 @@ jobs:
         env:
           IMAGE: ${{ steps.deploy.outputs.registryNameOutput }}
 
-      - name: Kustomize build and deploy to Kubernetes
+      - name: Kustomize build
         run: |
-          kustomize build ./Kubernetes | kubectl apply --kubeconfig ./Kubernetes/.kubeconfig -f -
+          kustomize build ./Kubernetes >> ./Kubernetes/output.yaml
+          cat ./Kubernetes/rendered.yaml
+
+      - name: Install Kubectl and get context
+        uses: azure/CLI@v1
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az aks install-cli
+            az aks get-credentials -g ${{ steps.deploy.outputs.resourceGroupOutput }} -n ${{ steps.deploy.outputs.aksName }}
+            kubectl apply -f ./Kubernetes/output.yaml
