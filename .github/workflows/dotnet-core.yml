@@ -11,10 +11,26 @@ jobs:
     runs-on: ubuntu-20.04
 
     env:
-      COMMIT_REF: $(git rev-parse --short "$GITHUB_SHA")
+      COMMIT_REF: ${GITHUB_SHA::8}
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v1
+
+      - name: Kustomize edit
+        run: |
+          cd ./Kubernetes/
+          echo $IMAGE
+          kustomize edit set image aspnet5webapp:latest=$IMAGE/aspnet5webapp:${GITHUB_SHA::8}
+        env:
+          IMAGE: aspnet5webapp
+
+      - name: Kustomize build
+        run: |
+          kustomize build
+          cd ..
 
       - name: Run Bicep build
         uses: aliencube/bicep-build-actions@v0.1
@@ -50,10 +66,9 @@ jobs:
         run: |
           cd ./Kubernetes/
           echo $IMAGE
-          kustomize edit set image aspnet5webapp:latest=$IMAGE/aspnet5webapp:$COMMIT
+          kustomize edit set image aspnet5webapp:latest=$IMAGE/aspnet5webapp:${GITHUB_SHA::8}
         env:
-          IMAGE: ${{ steps.deploy.outputs.registryNameOutput }}
-          COMMIT: ${{ env.COMMIT_REF }}
+          IMAGE: aspnet5webapp
 
       - name: Kustomize build
         run: |
