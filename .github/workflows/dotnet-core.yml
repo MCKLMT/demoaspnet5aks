@@ -51,18 +51,20 @@ jobs:
           cluster-name: ${{ steps.deploy.outputs.aksName }}
         id: login
 
-      - uses: azure/k8s-bake@v1
-        with:
-          renderEngine: "kustomize"
-          kustomizationPath: "./Kubernetes/"
-          args: edit set image aspnet5webapp:latest=${{ steps.deploy.outputs.registryNameOutput }}/aspnet5webapp:${{ env.COMMIT_REF }}}
-          kubectl-version: "latest"
+      - uses: imranismail/setup-kustomize@v1
+
+      - run: ./Kubernetes/kustomize edit set image aspnet5webapp:latest=${{ steps.deploy.outputs.registryNameOutput }}/aspnet5webapp:${{ env.COMMIT_REF }}}
+
+      - run: ./Kubernetes/kustomize edit set image aspnet5webapp:latest=${{ steps.deploy.outputs.registryNameOutput }}/aspnet5webapp:${{ env.COMMIT_REF }}}
+
+      - run: ./Kubernetes/kustomize build
 
       - name: Deploy to Azure Kubernetes Service
         uses: azure/k8s-deploy@v1.3
         with:
           namespace: "aspnet5webapp"
           manifests: |
+            ./Kubernetes/namespace.yaml
             ./Kubernetes/deployment.yaml
             ./Kubernetes/service.yaml
           images: ${{ steps.deploy.outputs.registryNameOutput }}/aspnet5webapp:${{ env.COMMIT_REF }}}
