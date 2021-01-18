@@ -32,7 +32,7 @@ jobs:
         with:
           scope: resourcegroup
           subscriptionId: ${{ secrets.SUBSCRIPTION_ID }}
-          resourceGroupName: demoaspnet5container-rg
+          resourceGroupName: demoaspnet5aks-rg
           template: ./Infrastructure/main.json
           deploymentMode: Incremental
 
