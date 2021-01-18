@@ -16,22 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Setup Kustomize
-        uses: imranismail/setup-kustomize@v1
-
-      - name: Kustomize edit
-        run: |
-          cd ./Kubernetes/
-          echo $IMAGE
-          kustomize edit set image aspnet5webapp:latest=$IMAGE/aspnet5webapp:${GITHUB_SHA::8}
-        env:
-          IMAGE: aspnet5webapp
-
-      - name: Kustomize build
-        run: |
-          cd ./Kubernetes/
-          kustomize build
-
       - name: Run Bicep build
         uses: aliencube/bicep-build-actions@v0.1
         with:
@@ -59,6 +43,13 @@ jobs:
           inlineScript: |
             az acr build --registry ${{ steps.deploy.outputs.registryNameOutput }} --image aspnet5webapp:${{ env.COMMIT_REF }} ./WebApp/
 
+      - name: Set Azure Kubernetes Service context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: "${{ secrets.AZURE_CREDENTIALS }}"
+          resource-group: ${{ steps.deploy.outputs.resourceGroupOutput }}
+          cluster-name: ${{ steps.deploy.outputs.aksName }}
+
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v1
 
@@ -66,22 +57,13 @@ jobs:
         run: |
           cd ./Kubernetes/
           echo $IMAGE
-          kustomize edit set image aspnet5webapp:latest=$IMAGE/aspnet5webapp:${GITHUB_SHA::8}
+          kustomize edit set image aspnet5webapp:latest=$IMAGE/aspnet5webapp:$COMMIT_REF
         env:
-          IMAGE: aspnet5webapp
+          IMAGE: ${{ steps.deploy.outputs.registryNameOutput }}
 
       - name: Kustomize build
         run: |
-          kustomize build
-          cd ..
-
-      - name: Set Azure Kubernetes Service context
-        uses: azure/aks-set-context@v1
-        with:
-          creds: "${{ secrets.AZURE_CREDENTIALS }}"
-          resource-group: ${{ steps.deploy.outputs.resourceGroupOutput }}
-          cluster-name: ${{ steps.deploy.outputs.aksName }}
-        id: login
+          kustomize build ./Kubernetes
 
       - name: Deploy to Azure Kubernetes Service
         uses: azure/k8s-deploy@v1.3
