@@ -10,9 +10,6 @@ jobs:
   Build_and_deploy:
     runs-on: ubuntu-20.04
 
-    env:
-      COMMIT_REF: ${GITHUB_SHA::8}
-
     steps:
       - uses: actions/checkout@v2
 
@@ -41,7 +38,7 @@ jobs:
         with:
           azcliversion: latest
           inlineScript: |
-            az acr build --registry ${{ steps.deploy.outputs.registryNameOutput }} --image aspnet5webapp:${{ env.COMMIT_REF }} ./WebApp/
+            az acr build --registry ${{ steps.deploy.outputs.registryNameOutput }} --image aspnet5webapp:${GITHUB_SHA::8} ./WebApp/
 
       - name: Set Azure Kubernetes Service context
         uses: azure/aks-set-context@v1
@@ -57,7 +54,8 @@ jobs:
         run: |
           cd ./Kubernetes/
           echo $IMAGE
-          kustomize edit set image aspnet5webapp:latest=$IMAGE/aspnet5webapp:$COMMIT_REF
+          echo ${GITHUB_SHA::8}
+          kustomize edit set image aspnet5webapp:latest=$IMAGE/aspnet5webapp:${GITHUB_SHA::8}
         env:
           IMAGE: ${{ steps.deploy.outputs.registryNameOutput }}
 
@@ -73,5 +71,5 @@ jobs:
             ./Kubernetes/namespace.yaml
             ./Kubernetes/deployment.yaml
             ./Kubernetes/service.yaml
-          images: ${{ steps.deploy.outputs.registryNameOutput }}/aspnet5webapp:${{ env.COMMIT_REF }}}
+          images: ${{ steps.deploy.outputs.registryNameOutput }}/aspnet5webapp:${GITHUB_SHA::8}
           kubectl-version: "latest"
