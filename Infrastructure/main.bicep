@@ -17,16 +17,21 @@ var addressPrefix = '20.0.0.0/16'
 var subnetName = 'subnet-01'
 var subnetPrefix = '20.0.0.0/23'
 var nodeResourceGroup = '${resourceGroup().name}-managed'
-/*
+
+resource userManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: '${clusterName}Identity'
+  location: location
+}
+
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   name: roleAssignmentName
   scope: containerRegistry
   properties: {
     roleDefinitionId: roleDefinitionId
-    principalId: aks.identity.principalId
+    principalId: userManagedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
-}*/
+}
 resource containerRegistry 'Microsoft.ContainerRegistry/registries@2020-11-01-preview' = {
   name: '${clusterName}acr'
   location: location
@@ -60,7 +65,10 @@ resource aks 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
   name: clusterName
   location: location
   identity: {
-    type: 'SystemAssigned'
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${userManagedIdentity.id}': {}
+    }
   }
   properties: {
     kubernetesVersion: kubernetesVersion

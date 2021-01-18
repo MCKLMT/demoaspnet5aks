@@ -57,7 +57,7 @@ jobs:
           kustomize build ./Kubernetes >> ./Kubernetes/output.yaml
           cat ./Kubernetes/output.yaml
 
-      - name: Install Kubectl and get context
+      - name: Install Kubectl and deploy
         uses: azure/CLI@v1
         with:
           azcliversion: latest
