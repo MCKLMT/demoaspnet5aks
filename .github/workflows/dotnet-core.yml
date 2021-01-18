@@ -55,7 +55,7 @@ jobs:
       - name: Kustomize build
         run: |
           kustomize build ./Kubernetes >> ./Kubernetes/output.yaml
-          cat ./Kubernetes/rendered.yaml
+          cat ./Kubernetes/output.yaml
 
       - name: Install Kubectl and get context
         uses: azure/CLI@v1
