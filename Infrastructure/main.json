@@ -39,21 +39,6 @@
   },
   "resources": [
     {
-      "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2020-04-01-preview",
-      "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', format('{0}acr', parameters('clusterName')))]",
-      "name": "[variables('roleAssignmentName')]",
-      "properties": {
-        "roleDefinitionId": "[variables('roleDefinitionId')]",
-        "principalId": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('clusterName')), '2020-09-01', 'full').identity.principalId]",
-        "principalType": "ServicePrincipal"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.ContainerService/managedClusters', parameters('clusterName'))]",
-        "[resourceId('Microsoft.ContainerRegistry/registries', format('{0}acr', parameters('clusterName')))]"
-      ]
-    },
-    {
       "type": "Microsoft.ContainerRegistry/registries",
       "apiVersion": "2020-11-01-preview",
       "name": "[format('{0}acr', parameters('clusterName'))]",

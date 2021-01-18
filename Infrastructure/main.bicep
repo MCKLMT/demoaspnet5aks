@@ -9,7 +9,7 @@ param agentCount int {
 param agentVMSize string = 'Standard_D2_v3'
 
 var identityName = 'scratch'
-var roleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
+var roleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d') // ACRpull
 var roleAssignmentName = guid(identityName, roleDefinitionId)
 var kubernetesVersion = '1.19.6'
 var virtualNetworkName = 'vnet-01'
@@ -17,7 +17,7 @@ var addressPrefix = '20.0.0.0/16'
 var subnetName = 'subnet-01'
 var subnetPrefix = '20.0.0.0/23'
 var nodeResourceGroup = '${resourceGroup().name}-managed'
-
+/*
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   name: roleAssignmentName
   scope: containerRegistry
@@ -26,7 +26,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-prev
     principalId: aks.identity.principalId
     principalType: 'ServicePrincipal'
   }
-}
+}*/
 resource containerRegistry 'Microsoft.ContainerRegistry/registries@2020-11-01-preview' = {
   name: '${clusterName}acr'
   location: location
