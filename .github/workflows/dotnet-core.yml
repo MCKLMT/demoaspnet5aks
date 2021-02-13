@@ -62,4 +62,4 @@ jobs:
         run: |
           az aks install-cli
           az aks get-credentials -g ${{ steps.deploy.outputs.resourceGroupOutput }} -n ${{ steps.deploy.outputs.aksName }}
-          kubectl apply -f ./Kubernetes/output.yaml
+          kubectl apply -f ./Kubernetes/output.yaml -n aspnet5webapp
