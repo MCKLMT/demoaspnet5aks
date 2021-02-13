@@ -41,9 +41,6 @@ jobs:
         run: |
           az acr build --registry ${{ steps.deploy.outputs.registryNameOutput }} --image aspnet5webapp:${GITHUB_SHA::8} ./WebApp/
 
-      - name: Setup Kustomize
-        uses: imranismail/setup-kustomize@v1
-
       - name: Kustomize edit
         run: |
           cd ./Kubernetes/
@@ -58,8 +55,7 @@ jobs:
           kustomize build ./Kubernetes >> ./Kubernetes/output.yaml
           cat ./Kubernetes/output.yaml
 
-      - name: Install Kubectl and deploy
+      - name: Kubectl apply
         run: |
-          az aks install-cli
           az aks get-credentials -g ${{ steps.deploy.outputs.resourceGroupOutput }} -n ${{ steps.deploy.outputs.aksName }}
           kubectl apply -f ./Kubernetes/output.yaml -n aspnet5webapp
