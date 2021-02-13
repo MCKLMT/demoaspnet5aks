@@ -23,6 +23,10 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Create resource group
+        run: |
+          az group create -n 'demoaspnet5aks-rg' -l 'France Central'
+
       - name: Deploy Azure Resource Manager (ARM) Template
         uses: azure/arm-deploy@v1
         id: deploy
@@ -34,11 +38,8 @@ jobs:
           deploymentMode: Incremental
 
       - name: Build image with Azure Container Registry
-        uses: azure/CLI@v1
-        with:
-          azcliversion: latest
-          inlineScript: |
-            az acr build --registry ${{ steps.deploy.outputs.registryNameOutput }} --image aspnet5webapp:${GITHUB_SHA::8} ./WebApp/
+        run: |
+          az acr build --registry ${{ steps.deploy.outputs.registryNameOutput }} --image aspnet5webapp:${GITHUB_SHA::8} ./WebApp/
 
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v1
@@ -58,10 +59,7 @@ jobs:
           cat ./Kubernetes/output.yaml
 
       - name: Install Kubectl and deploy
-        uses: azure/CLI@v1
-        with:
-          azcliversion: latest
-          inlineScript: |
-            az aks install-cli
-            az aks get-credentials -g ${{ steps.deploy.outputs.resourceGroupOutput }} -n ${{ steps.deploy.outputs.aksName }}
-            kubectl apply -f ./Kubernetes/output.yaml
+        run: |
+          az aks install-cli
+          az aks get-credentials -g ${{ steps.deploy.outputs.resourceGroupOutput }} -n ${{ steps.deploy.outputs.aksName }}
+          kubectl apply -f ./Kubernetes/output.yaml
